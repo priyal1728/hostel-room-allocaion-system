@@ -1,4 +1,4 @@
-✅ HOSTEL ROOM ALLOCATION SYSTEM - SETUP GUIDE
+ HOSTEL ROOM ALLOCATION SYSTEM - SETUP GUIDE
 
 === STEP 1: DATABASE SETUP ===
 1. Open your browser and go to: http://localhost/phpmyadmin/
