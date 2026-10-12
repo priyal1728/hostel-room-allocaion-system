@@ -2,9 +2,15 @@
 require_once '../includes/config.php';
 require_once '../includes/auth.php';
 
-requireLogin();
+requireStudentLogin();
 
-$student = getStudentById($_SESSION['student_id']);
+$student = getStudentById($_SESSION['student_id'] ?? 0);
+if (!$student) {
+    session_unset();
+    session_destroy();
+    redirect('auth/login.php');
+}
+
 $room_allocation = getStudentRoomAllocation($_SESSION['student_id']);
 ?>
 
@@ -33,7 +39,7 @@ $room_allocation = getStudentRoomAllocation($_SESSION['student_id']);
 
     <div class="container">
         <div class="welcome-section">
-            <h1>Welcome, <?php echo htmlspecialchars($student['name']); ?>!</h1>
+            <h1>Welcome, <?php echo htmlspecialchars($student['name'] ?? 'Student'); ?>!</h1>
             <p>Your hostel portal dashboard</p>
         </div>
 
@@ -46,11 +52,11 @@ $room_allocation = getStudentRoomAllocation($_SESSION['student_id']);
                 <div class="card-body">
                     <?php if ($room_allocation): ?>
                         <div class="allocation-info">
-                            <p><strong>Room Number:</strong> <?php echo htmlspecialchars($room_allocation['room_number']); ?></p>
-                            <p><strong>Block:</strong> <?php echo htmlspecialchars($room_allocation['block']); ?></p>
-                            <p><strong>Floor:</strong> <?php echo htmlspecialchars($room_allocation['floor']); ?></p>
-                            <p><strong>Capacity:</strong> <?php echo htmlspecialchars($room_allocation['capacity']); ?> students</p>
-                            <p><strong>Allocated Date:</strong> <?php echo date('d-m-Y', strtotime($room_allocation['allocation_date'])); ?></p>
+                            <p><strong>Room Number:</strong> <?php echo htmlspecialchars($room_allocation['room_number'] ?? ''); ?></p>
+                            <p><strong>Block:</strong> <?php echo htmlspecialchars($room_allocation['block'] ?? ''); ?></p>
+                            <p><strong>Floor:</strong> <?php echo htmlspecialchars($room_allocation['floor'] ?? ''); ?></p>
+                            <p><strong>Capacity:</strong> <?php echo htmlspecialchars($room_allocation['capacity'] ?? ''); ?> students</p>
+                            <p><strong>Allocated Date:</strong> <?php echo date('d-m-Y', strtotime($room_allocation['allocation_date'] ?? 'now')); ?></p>
                         </div>
                     <?php else: ?>
                         <p class="no-allocation">No room allocated yet.</p>
@@ -65,11 +71,11 @@ $room_allocation = getStudentRoomAllocation($_SESSION['student_id']);
                     <h3>Student Information</h3>
                 </div>
                 <div class="card-body">
-                    <p><strong>Enrollment No:</strong> <?php echo htmlspecialchars($student['enrollment_no']); ?></p>
-                    <p><strong>Branch:</strong> <?php echo htmlspecialchars($student['branch']); ?></p>
-                    <p><strong>Year:</strong> Year <?php echo htmlspecialchars($student['year']); ?></p>
-                    <p><strong>Email:</strong> <?php echo htmlspecialchars($student['email']); ?></p>
-                    <p><strong>Phone:</strong> <?php echo htmlspecialchars($student['phone']); ?></p>
+                    <p><strong>Enrollment No:</strong> <?php echo htmlspecialchars($student['enrollment_no'] ?? ''); ?></p>
+                    <p><strong>Branch:</strong> <?php echo htmlspecialchars($student['branch'] ?? ''); ?></p>
+                    <p><strong>Year:</strong> Year <?php echo htmlspecialchars($student['year'] ?? ''); ?></p>
+                    <p><strong>Email:</strong> <?php echo htmlspecialchars($student['email'] ?? ''); ?></p>
+                    <p><strong>Phone:</strong> <?php echo htmlspecialchars($student['phone'] ?? ''); ?></p>
                     <a href="profile.php" class="btn-secondary">View Full Profile</a>
                 </div>
             </div>
@@ -84,11 +90,11 @@ $room_allocation = getStudentRoomAllocation($_SESSION['student_id']);
                     <p>Room Status</p>
                 </div>
                 <div class="stat-card">
-                    <h4><?php echo htmlspecialchars($student['year']); ?></h4>
+                    <h4><?php echo htmlspecialchars($student['year'] ?? 'N/A'); ?></h4>
                     <p>Current Year</p>
                 </div>
                 <div class="stat-card">
-                    <h4><?php echo htmlspecialchars($student['branch']); ?></h4>
+                    <h4><?php echo htmlspecialchars($student['branch'] ?? 'N/A'); ?></h4>
                     <p>Branch</p>
                 </div>
             </div>

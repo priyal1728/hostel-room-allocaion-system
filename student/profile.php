@@ -2,12 +2,17 @@
 require_once '../includes/config.php';
 require_once '../includes/auth.php';
 
-requireLogin();
+requireStudentLogin();
 
-$student = getStudentById($_SESSION['student_id']);
+$student = getStudentById($_SESSION['student_id'] ?? 0);
+if (!$student) {
+    session_unset();
+    session_destroy();
+    redirect('auth/login.php');
+}
+
 $error = '';
 $success = '';
-$is_editing = false;
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
@@ -112,50 +117,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_password'])) {
                     <div class="form-row">
                         <div class="form-group">
                             <label>Enrollment Number</label>
-                            <input type="text" value="<?php echo htmlspecialchars($student['enrollment_no']); ?>" disabled>
+                            <input type="text" value="<?php echo htmlspecialchars($student['enrollment_no'] ?? ''); ?>" disabled>
                         </div>
                         <div class="form-group">
                             <label>Email Address</label>
-                            <input type="email" value="<?php echo htmlspecialchars($student['email']); ?>" disabled>
+                            <input type="email" value="<?php echo htmlspecialchars($student['email'] ?? ''); ?>" disabled>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="name">Full Name *</label>
-                            <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($student['name']); ?>" required>
+                            <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($student['name'] ?? ''); ?>" required>
                         </div>
                         <div class="form-group">
                             <label for="phone">Phone Number *</label>
-                            <input type="tel" id="phone" name="phone" value="<?php echo htmlspecialchars($student['phone']); ?>" required>
+                            <input type="tel" id="phone" name="phone" value="<?php echo htmlspecialchars($student['phone'] ?? ''); ?>" required>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label>Branch</label>
-                            <input type="text" value="<?php echo htmlspecialchars($student['branch']); ?>" disabled>
+                            <input type="text" value="<?php echo htmlspecialchars($student['branch'] ?? ''); ?>" disabled>
                         </div>
                         <div class="form-group">
                             <label>Year</label>
-                            <input type="text" value="Year <?php echo htmlspecialchars($student['year']); ?>" disabled>
+                            <input type="text" value="Year <?php echo htmlspecialchars($student['year'] ?? ''); ?>" disabled>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label>Gender</label>
-                            <input type="text" value="<?php echo htmlspecialchars($student['gender']); ?>" disabled>
+                            <input type="text" value="<?php echo htmlspecialchars($student['gender'] ?? ''); ?>" disabled>
                         </div>
                         <div class="form-group">
                             <label>Date of Birth</label>
-                            <input type="text" value="<?php echo date('d-m-Y', strtotime($student['dob'])); ?>" disabled>
+                            <input type="text" value="<?php echo !empty($student['dob']) ? date('d-m-Y', strtotime($student['dob'])) : ''; ?>" disabled>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="address">Address</label>
-                        <textarea id="address" name="address" rows="3"><?php echo htmlspecialchars($student['address']); ?></textarea>
+                        <textarea id="address" name="address" rows="3"><?php echo htmlspecialchars($student['address'] ?? ''); ?></textarea>
                     </div>
 
                     <div class="form-row">

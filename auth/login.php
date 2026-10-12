@@ -4,10 +4,14 @@ require_once '../includes/auth.php';
 
 $error = '';
 
-// Check if user already logged in
+// If already logged in, redirect to the correct dashboard
 if (isLoggedIn()) {
-    header("Location: " . BASE_URL . "student/dashboard.php");
-    exit();
+    if (isStudent()) {
+        redirect('student/dashboard.php');
+    }
+    if (isAdmin()) {
+        redirect('admin/dashboard.php');
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {

@@ -2,58 +2,45 @@
 require_once '../includes/config.php';
 require_once '../includes/auth.php';
 
-requireLogin();
+requireStudentLogin();
 
 $student = getStudentById($_SESSION['student_id']);
 $room_allocation = getStudentRoomAllocation($_SESSION['student_id']);
 $error = '';
 $success = '';
 
-// Check if student already has allocation
 if ($room_allocation) {
-    header("Location: dashboard.php");
+    header('Location: dashboard.php');
     exit();
 }
 
-// Fetch available rooms
-$query = "SELECT * FROM rooms WHERE status = 'Available' AND current_occupancy < capacity ORDER BY block, room_number";
+$query = 'SELECT * FROM rooms WHERE status = "Available" AND current_occupancy < capacity ORDER BY block, room_number';
 $result = mysqli_query($conn, $query);
 $available_rooms = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
-// Handle room request
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['request_room'])) {
-    $room_id = $_POST['room_id'] ?? '';
-    
-    if (empty($room_id)) {
-        $error = "Please select a room!";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_room'])) {
+    $room_id = (int)($_POST['room_id'] ?? 0);
+
+    if ($room_id <= 0) {
+        $error = 'Please select a room.';
     } else {
-        // Check if room still available
-        $check_query = "SELECT * FROM rooms WHERE id = ? AND current_occupancy < capacity";
+        $check_query = 'SELECT * FROM rooms WHERE id = ? AND current_occupancy < capacity';
         $stmt = mysqli_prepare($conn, $check_query);
-        mysqli_stmt_bind_param($stmt, "i", $room_id);
+        mysqli_stmt_bind_param($stmt, 'i', $room_id);
         mysqli_stmt_execute($stmt);
         $check_result = mysqli_stmt_get_result($stmt);
-        
-        if (mysqli_num_rows($check_result) == 0) {
-            $error = "Selected room is no longer available!";
+
+        if (mysqli_num_rows($check_result) === 0) {
+            $error = 'Selected room is no longer available.';
         } else {
-            $allocation_date = date('Y-m-d');
-            
-            $insert_query = "INSERT INTO room_allocations (student_id, room_id, allocation_date, status) VALUES (?, ?, ?, 'Active')";
+            $insert_query = 'INSERT INTO room_requests (student_id, room_id, status) VALUES (?, ?, "Pending")';
             $insert_stmt = mysqli_prepare($conn, $insert_query);
-            mysqli_stmt_bind_param($insert_stmt, "iis", $_SESSION['student_id'], $room_id, $allocation_date);
-            
+            mysqli_stmt_bind_param($insert_stmt, 'ii', $_SESSION['student_id'], $room_id);
+
             if (mysqli_stmt_execute($insert_stmt)) {
-                // Update room occupancy
-                $update_query = "UPDATE rooms SET current_occupancy = current_occupancy + 1 WHERE id = ?";
-                $update_stmt = mysqli_prepare($conn, $update_query);
-                mysqli_stmt_bind_param($update_stmt, "i", $room_id);
-                mysqli_stmt_execute($update_stmt);
-                
-                $success = "Room allocated successfully! Redirecting...";
-                header("refresh:2;url=dashboard.php");
+                $success = 'Room request submitted successfully. Please wait for admin approval.';
             } else {
-                $error = "Error allocating room: " . mysqli_error($conn);
+                $error = 'Error sending request: ' . mysqli_error($conn);
             }
         }
     }
@@ -86,19 +73,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['request_room'])) {
     <div class="container">
         <div class="page-header">
             <h1>Request a Room</h1>
-            <p>Select and apply for an available hostel room</p>
+            <p>Select an available hostel room and send your request.</p>
         </div>
 
         <?php if (!empty($error)): ?>
-            <div class="alert alert-error">
-                <strong>Error!</strong> <?php echo htmlspecialchars($error); ?>
-            </div>
+            <div class="alert alert-error"><strong>Error!</strong> <?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
         <?php if (!empty($success)): ?>
-            <div class="alert alert-success">
-                <strong>Success!</strong> <?php echo htmlspecialchars($success); ?>
-            </div>
+            <div class="alert alert-success"><strong>Success!</strong> <?php echo htmlspecialchars($success); ?></div>
         <?php endif; ?>
 
         <?php if (count($available_rooms) > 0): ?>
@@ -123,14 +106,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['request_room'])) {
                         <?php endforeach; ?>
                     </div>
 
-                    <button type="submit" name="request_room" class="btn-primary" style="margin-top: 25px;">Confirm Allocation</button>
+                    <button type="submit" name="request_room" class="btn-primary" style="margin-top:25px;">Submit Room Request</button>
                 </form>
             </div>
         <?php else: ?>
             <div class="profile-section">
                 <div class="no-allocation">
                     <h3>No Rooms Available</h3>
-                    <p>All rooms are currently fully occupied. Please check back later.</p>
+                    <p>All rooms are currently full or unavailable. Please check later.</p>
                 </div>
             </div>
         <?php endif; ?>
@@ -150,7 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['request_room'])) {
             padding: 20px;
             background: #f9f9f9;
             transition: all 0.3s ease;
-            cursor: pointer;
         }
 
         .room-card:hover {
@@ -159,46 +141,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['request_room'])) {
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
         }
 
-        .room-card input[type="radio"]:checked + span {
-            color: #667eea;
-            font-weight: 600;
-        }
-
         .room-info {
             margin-bottom: 15px;
         }
 
         .room-info h4 {
             color: #173b67;
-            font-size: 18px;
             margin-bottom: 12px;
-        }
-
-        .room-info p {
-            font-size: 13px;
-            margin-bottom: 8px;
-            color: #555;
         }
 
         .room-radio {
             display: flex;
             align-items: center;
-            cursor: pointer;
             gap: 10px;
-            font-weight: 500;
-            color: #666;
+            cursor: pointer;
+            font-weight: 600;
         }
 
         .room-radio input {
-            cursor: pointer;
             width: 18px;
             height: 18px;
         }
 
         @media (max-width: 768px) {
-            .rooms-grid {
-                grid-template-columns: 1fr;
-            }
+            .rooms-grid { grid-template-columns: 1fr; }
         }
     </style>
 </body>
